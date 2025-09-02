@@ -379,13 +379,28 @@ if (typeof firebase !== 'undefined') {
 
         // register service worker and wire up messaging
         if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('/firebase-messaging-sw.js')
-                .then(registration => {
-                    // for compat: tell messaging to use this SW
-                    try { messaging.useServiceWorker(registration); } catch (e) {}
-                    console.log('Service worker registered for FCM');
-                })
-                .catch(err => console.warn('SW registration failed', err));
+            const canRegisterSW = (location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1');
+            const swPath = './firebase-messaging-sw.js'; // relative path on the published site
+            if (canRegisterSW) {
+                // Check the SW file exists first to avoid a noisy 404/TypeError in the console
+                fetch(swPath, { method: 'HEAD' })
+                    .then(resp => {
+                        if (!resp.ok) {
+                            console.warn(`Service worker file not found (${resp.status}). Skipping registration: ${swPath}`);
+                            return null;
+                        }
+                        return navigator.serviceWorker.register(swPath);
+                    })
+                    .then(registration => {
+                        if (!registration) return;
+                        // for compat: tell messaging to use this SW
+                        try { messaging.useServiceWorker(registration); } catch (e) {}
+                        console.log('Service worker registered for FCM');
+                    })
+                    .catch(err => console.warn('SW registration failed', err));
+            } else {
+                console.warn('Service worker not registered: insecure origin or file://. Push notifications require a secure origin (https) or localhost.');
+            }
         }
 
         // request permission, get token and send to your backend
@@ -550,3 +565,6 @@ async function updateTimer() {
 // start timer updates (1s) and kick an immediate update
 setInterval(updateTimer, 1000);
 updateTimer();
+
+
+
