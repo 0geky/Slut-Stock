@@ -1,0 +1,349 @@
+/* Modern red & black theme */
+
+@font-face {
+    font-family: 'Comic Neue Angular';
+    src: url('ComicNeue-Angular-Bold.ttf');
+}
+
+:root{
+    --bg-dark: #0b0b0b;
+    --panel: #120a0a;
+    --red-600: #e63946;
+    --red-700: #b71c1c;
+    --muted: #9b9b9b;
+    --glass: rgba(255,255,255,0.03);
+    --card-shadow: 0 6px 24px rgba(0,0,0,0.6);
+}
+
+*{box-sizing: border-box;}
+
+body{
+    font-family: 'Comic Neue Angular', system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+    font-size: 16px;
+    background: linear-gradient(180deg, #070707 0%, #1b0f0f 100%);
+    color: #eee;
+    margin: 0;
+    min-height: 100vh;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    overflow-x: hidden;
+    -webkit-font-smoothing:antialiased;
+    -moz-osx-font-smoothing:grayscale;
+}
+
+/* Top timer bar */
+#timer{
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    background: linear-gradient(90deg, var(--red-700), var(--red-600));
+    padding: 12px 18px;
+    font-size: 18px;
+    width: 100%;
+    color: #fff;
+    box-shadow: 0 4px 14px rgba(230,57,70,0.15);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+/* Main stock area */
+#stock{
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+    gap: 18px;
+    padding: 20px;
+    align-content: start;
+}
+
+/* Card style for items */
+.item{
+    display: flex;
+    gap: 12px;
+    background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(0,0,0,0.25));
+    border: 1px solid rgba(255,255,255,0.03);
+    height: 140px;
+    width: 100%;
+    border-radius: 12px;
+    padding: 10px;
+    align-items: center;
+    transition: transform .12s ease, box-shadow .12s ease;
+    box-shadow: var(--card-shadow);
+    backdrop-filter: blur(4px);
+}
+.item:hover{
+    transform: translateY(-6px);
+    box-shadow: 0 18px 40px rgba(0,0,0,0.7);
+}
+
+/* Item image */
+.item img{
+    width: 110px;
+    height: 110px;
+    border-radius: 10px;
+    margin: 0;
+    border: 2px solid rgba(255,255,255,0.04);
+    background: linear-gradient(180deg, #2a0b0b, #4a1a1a);
+    padding: 6px;
+    object-fit: contain;
+}
+
+/* Content layout */
+.item_name{
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    width: 100%;
+    gap: 6px;
+}
+
+/* Sections inside card */
+.item_section{
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    gap: 8px;
+}
+/* Left column (name + qty) */
+.item_section > .left{
+    display:flex;
+    flex-direction: column;
+    gap:4px;
+    flex: 1 1 auto;
+}
+
+/* Right column (price + rarity) - stacked vertically and right-aligned */
+.item_section > .right{
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    justify-content: center;
+    gap: 6px;
+    min-width: 110px;
+}
+
+/* Name and quantity */
+.item_section .name {
+    font-weight: 700;
+    font-size: 18px;
+    letter-spacing: 0.2px;
+    color: #fff;
+    text-shadow: 0 2px 8px rgba(0,0,0,0.6);
+}
+.item_section .qty {
+    color: var(--muted);
+    font-size: 14px;
+}
+
+/* Price + rarity on the right */
+.item_section .price {
+    font-weight: 800;
+    color: var(--red-600);
+    font-size: 18px;
+    text-align: right;
+}
+.rarity{
+    display: inline-flex;
+    padding: 6px 10px;
+    height: auto;
+    border-radius: 999px;
+    background: linear-gradient(90deg, rgba(0,0,0,0.25), rgba(255,255,255,0.02));
+    color: #fff;
+    font-weight: 700;
+    font-size: 13px;
+    align-items: center;
+    justify-content: center;
+    width: auto;
+    min-width: 80px;
+    box-shadow: inset 0 -2px 6px rgba(0,0,0,0.4);
+    border: 1px solid rgba(255,255,255,0.03);
+}
+
+/* Description (right-aligned, muted) */
+.item_desc{
+    display: block;
+    font-size: 14px;
+    color: #d7d7d7;
+    opacity: 0.9;
+    text-align: right;
+    max-width: 360px;
+    line-height: 1.2;
+    word-break: break-word;
+}
+
+/* Controls / nav */
+ul{
+    margin: 0;
+    padding: 10px 20px;
+    display:flex;
+    gap: 8px;
+    list-style: none;
+}
+li { margin: 0; padding: 0; display: inline-block; }
+
+/* Buttons */
+button{
+    margin: 0;
+    padding: 10px 14px;
+    height: 48px;
+    min-width: 90px;
+    font-family: inherit;
+    font-size: 15px;
+    background: linear-gradient(180deg, rgba(0,0,0,0.45), rgba(0,0,0,0.2));
+    color: #fff;
+    border: 1px solid rgba(255,255,255,0.04);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: transform .12s ease, box-shadow .12s ease, background .12s ease;
+}
+button:hover{ transform: translateY(-3px); box-shadow: 0 10px 30px rgba(0,0,0,0.6); }
+
+/* Mode colors */
+li:nth-child(2)> button{ background: linear-gradient(90deg,var(--red-700),var(--red-600)); border: none; }
+li:nth-child(3)> button{ background: linear-gradient(90deg,#2b6fda,#1f4fbf); border: none; }
+li:nth-child(4)> button{ background: linear-gradient(90deg,#ff9a3c,#fd7a1a); border: none; }
+li:nth-child(5)> button{ background: linear-gradient(90deg,#12b4fd,#0b83c7); border: none; }
+
+/* Weather area */
+.weather{
+    overflow-x: auto;
+    display: flex;
+    justify-content: right;
+    position: fixed;
+    bottom: 18px;
+    right: 18px;
+    gap: 6px;
+    z-index: 100;
+}
+.weather img{
+    width: 56px;
+    height: 56px;
+    margin: 0;
+    padding: 6px;
+    border-radius: 10px;
+    border: 2px solid rgba(255,255,255,0.06);
+    background: linear-gradient(180deg,#2a0a0a,#3b1111);
+    box-shadow: 0 6px 18px rgba(0,0,0,0.6);
+}
+
+/* Weather info tooltip */
+.weatherinfo {
+    position: fixed;
+    background: rgba(18,10,10,0.95);
+    padding: 12px;
+    border-radius: 8px;
+    font-size: 14px;
+    color: #fff;
+    z-index: 999999;
+    border: 1px solid rgba(255,255,255,0.04);
+    min-width: 220px;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.7);
+}
+
+.weathername {
+    font-weight: 800;
+    font-size: 16px;
+    color: #fff;
+    margin-bottom: 6px;
+}
+
+/* Misc */
+.error {
+    position: fixed;
+    background-color: #111;
+    color: #fff;
+    padding: 12px;
+    border-radius: 10px;
+    font-size: 16px;
+    z-index: 1000000;
+    box-shadow: 0 12px 40px rgba(0,0,0,0.8);
+    border: 1px solid rgba(230,57,70,0.08);
+}
+h1{
+    padding: 0;
+    margin: 0;
+    width: 100%;
+    font-size: 20px;
+}
+.black{
+    background: rgba(0, 0, 0, 0.7);
+    height: 100vh;
+    width: 100vw;
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 999999;
+}
+.error > button{
+    height: auto;
+    width: 100px;
+    padding: 8px;
+    font-size: 14px;
+    border-radius: 6px;
+    background: linear-gradient(90deg,var(--red-700),var(--red-600));
+    border: none;
+    color: #fff;
+}
+
+/* Settings panel */
+.settings{
+    position: fixed;
+    right: 20px;
+    top: 80px;
+    width: 340px;
+    max-height: 70vh;
+    overflow: auto;
+    background: linear-gradient(180deg, rgba(18,10,10,0.98), rgba(24,12,12,0.98));
+    border: 1px solid rgba(255,255,255,0.04);
+    padding: 12px;
+    border-radius: 10px;
+    z-index: 99999;
+    box-shadow: 0 14px 40px rgba(0,0,0,0.7);
+}
+.settings_header{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:8px;
+}
+.settings_content { padding: 6px 0; }
+.settings_item{
+    display:block;
+    padding:8px 6px;
+    border-bottom: 1px solid rgba(255,255,255,0.02);
+    font-size:14px;
+    color:#eee;
+}
+.settings_item input { margin-right: 8px; }
+.settings_actions{
+    display:flex;
+    gap:8px;
+    margin-top:10px;
+}
+.close_settings{
+    background: transparent;
+    border: 1px solid rgba(255,255,255,0.04);
+    color: #fff;
+    padding: 6px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+}
+.settings_actions > button{
+    padding:8px 10px;
+    border-radius:6px;
+    cursor:pointer;
+    background: linear-gradient(90deg,var(--red-700),var(--red-600));
+    border:none;
+    color:#fff;
+}
+@media (max-width:640px){
+    #stock{ grid-template-columns: 1fr; padding: 12px; gap: 12px; }
+    .item{ height: auto; flex-direction: column; align-items: flex-start; gap: 12px; }
+    .item img{ width: 84px; height: 84px; }
+    .item_desc{ text-align: left; max-width: 100%; }
+    #timer{ font-size: 15px; padding: 10px; }
+    .settings{ right: 10px; left: 10px; width: auto; top: 70px; }
+}

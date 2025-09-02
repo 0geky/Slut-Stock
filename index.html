@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <link rel="stylesheet" href="style.css">
+        <title>Grow A Garden Stock</title>
+
+        <!-- Firebase (compat) - used for simple web push integration -->
+        <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+        <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-messaging-compat.js"></script>
+    </head>
+    <body>
+        <div id="weatherinfo" class="weatherinfo" style="display: none;">
+            If you're seeing this, I messed up somehow.    
+        </div>
+        <ul>
+            <li><div id="weather"></div></li>
+            <li><button onclick="switchMode('seed')">Seed</button></li>
+            <li><button onclick="switchMode('gear')">Gear</button></li>
+            <li><button onclick="switchMode('egg')">Eggs</button></li>
+            <li><button onclick="switchMode('merchant')">Merchant</button></li>
+            <li><button onclick="openSettings()">Settings</button></li>
+        </ul>
+
+        <div id="timer"></div>
+        <div id="stock"></div>
+
+        <!-- Settings panel (hidden by default) -->
+        <div id="settings" class="settings" style="display:none;">
+            <div class="settings_header">
+                <strong>Notification Settings</strong>
+                <button onclick="closeSettings()" class="close_settings">Close</button>
+            </div>
+            <div id="settings_content" class="settings_content">
+                <!-- populated by main.js -->
+            </div>
+        </div>
+        <script src="api.js"></script>
+        <script src="main.js"></script>
+    </body>
+</html>
