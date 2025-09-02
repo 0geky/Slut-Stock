@@ -269,11 +269,36 @@ async function getStock() {
 
     // compute restock times: prefer API timestamps, otherwise fall back to next half-hour
     const apiSeedTs = data.seed_stock && data.seed_stock[0] && (data.seed_stock[0].end_date_unix || data.seed_stock[0].end_date);
-    seedRestock = apiSeedTs ? Number(apiSeedTs) : nextHalfHourUnix();
-
-    // prefer explicit egg timestamp if provided; otherwise same half-hour fallback
+    const apiGearTs = data.gear_stock && data.gear_stock[0] && (data.gear_stock[0].end_date_unix || data.gear_stock[0].end_date);
     const apiEggTs = data.egg_stock && data.egg_stock[0] && (data.egg_stock[0].end_date_unix || data.egg_stock[0].end_date);
-    eggRestock = apiEggTs ? Number(apiEggTs) : nextHalfHourUnix();
+
+    const newSeedRestock = apiSeedTs ? Number(apiSeedTs) : nextHalfHourUnix();
+    const newGearRestock = apiGearTs ? Number(apiGearTs) : nextHalfHourUnix();
+    const newEggRestock = apiEggTs ? Number(apiEggTs) : nextHalfHourUnix();
+
+    // detect restock changes (don't fire on first load)
+    const seedChanged = prevSeedRestock && (newSeedRestock !== prevSeedRestock);
+    const gearChanged = prevGearRestock && (newGearRestock !== prevGearRestock);
+    const eggChanged  = prevEggRestock  && (newEggRestock  !== prevEggRestock);
+
+    // prefer combined seed+gear message if both changed together
+    if (seedChanged && gearChanged) {
+        sendShopNotification('Seed and gear shop has restocked', 'Seed and gear shop has restocked — check the site for new items', 'seed-gear-restock');
+    } else {
+        if (seedChanged) sendShopNotification('Seed shop has restocked', 'Seed shop has restocked — check the site for new seeds', 'seed-restock');
+        if (gearChanged) sendShopNotification('Gear shop has restocked', 'Gear shop has restocked — check the site for new gear', 'gear-restock');
+    }
+    if (eggChanged) sendShopNotification('Egg shop has restocked', 'Egg shop has restocked — check the site for new eggs', 'egg-restock');
+
+    // update prev values for next detection
+    prevSeedRestock = newSeedRestock;
+    prevGearRestock = newGearRestock;
+    prevEggRestock  = newEggRestock;
+
+    // assign the canonical restock variables used elsewhere
+    seedRestock = newSeedRestock;
+    gearRestock = newGearRestock;
+    eggRestock = newEggRestock;
 
     switch (mode) {
         case 'seed':
@@ -507,6 +532,61 @@ function closeSettings() {
 // ensure restock timer variables exist before any timers run (prevents ReferenceError)
 let seedRestock = 0;
 let eggRestock = 0;
+// added: track gear restock + previous values to detect changes
+let gearRestock = 0;
+let prevSeedRestock = 0;
+let prevGearRestock = 0;
+let prevEggRestock = 0;
+
+// helper to show a small in-app toast (so users without Notification permission still get feedback)
+function showInAppToast(text, timeout = 6000) {
+    try {
+        const id = 'gg_toast_holder';
+        let holder = document.getElementById(id);
+        if (!holder) {
+            holder = document.createElement('div');
+            holder.id = id;
+            Object.assign(holder.style, {
+                position: 'fixed',
+                right: '14px',
+                bottom: '14px',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '8px',
+                zIndex: 100000
+            });
+            document.body.appendChild(holder);
+        }
+        const t = document.createElement('div');
+        t.textContent = text;
+        Object.assign(t.style, {
+            background: 'linear-gradient(90deg,#0b2511,#123a1f)',
+            color: '#d7fbe6',
+            padding: '10px 12px',
+            borderRadius: '10px',
+            boxShadow: '0 8px 24px rgba(0,0,0,0.5)',
+            fontSize: '13px',
+            maxWidth: '320px'
+        });
+        holder.appendChild(t);
+        setTimeout(() => { try { t.remove(); } catch (e) {} }, timeout);
+    } catch (e) { console.warn('showInAppToast failed', e); }
+}
+
+// helper to send a shop notification (uses Notification API when allowed)
+function sendShopNotification(title, body, tag) {
+    try {
+        if (window.Notification && Notification.permission === 'granted') {
+            new Notification(title, { body: body, tag: tag || 'gg-restock' });
+        } else {
+            console.log('Shop notification:', title, body);
+        }
+        // always show an in-app toast as well
+        showInAppToast(`${title} — ${body}`);
+    } catch (e) {
+        console.warn('sendShopNotification failed', e);
+    }
+}
 
 // ---- TIMER / RESTOCK UI ----
 function pad2(n) { return String(n).padStart(2, '0'); }
