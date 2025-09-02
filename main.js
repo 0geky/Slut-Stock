@@ -566,5 +566,199 @@ async function updateTimer() {
 setInterval(updateTimer, 1000);
 updateTimer();
 
+// --- notification prompt on first visit (black + green theme) ---
+function showNotificationPrompt() {
+    try {
+        if (localStorage.getItem('notif_prompt_dont_ask')) return;
+        if (!('Notification' in window)) return;
+        if (Notification.permission === 'granted' || Notification.permission === 'denied') return;
+
+        // overlay
+        const overlay = document.createElement('div');
+        overlay.id = 'notif_overlay';
+        Object.assign(overlay.style, {
+            position: 'fixed',
+            inset: '0',
+            background: 'rgba(0,0,0,0.65)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 99999,
+            backdropFilter: 'blur(4px)'
+        });
+
+        // card (dark)
+        const card = document.createElement('div');
+        card.setAttribute('role', 'dialog');
+        card.setAttribute('aria-modal', 'true');
+        Object.assign(card.style, {
+            width: '420px',
+            maxWidth: '94%',
+            borderRadius: '12px',
+            background: '#07100a', // deep black-green background
+            color: '#d7fbe6',       // pale green text
+            boxShadow: '0 12px 40px rgba(0,0,0,0.6)',
+            padding: '18px',
+            display: 'flex',
+            gap: '14px',
+            alignItems: 'flex-start',
+            fontFamily: 'Inter, system-ui, -apple-system, "Segoe UI", Roboto, Arial'
+        });
+
+        // accent icon
+        const iconWrap = document.createElement('div');
+        Object.assign(iconWrap.style, {
+            width: '56px',
+            height: '56px',
+            borderRadius: '10px',
+            background: 'linear-gradient(135deg,#093210,#16a34a)', // dark -> green
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            flexShrink: '0'
+        });
+        iconWrap.innerHTML = `<svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <path d="M12 4v4" stroke="#d7fbe6" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M18 8c0 3.866-1.343 5.5-3 6.5v1.5H9v-1.5c-1.657-1-3-2.634-3-6.5 0-3.866 2.686-6.5 6-6.5s6 2.634 6 6.5Z" stroke="#d7fbe6" stroke-width="1.1" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M9 19a3 3 0 0 0 6 0" stroke="#d7fbe6" stroke-width="1.1" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>`;
+
+        // content
+        const content = document.createElement('div');
+        Object.assign(content.style, { flex: '1 1 auto' });
+
+        const title = document.createElement('div');
+        title.textContent = 'Enable restock notifications';
+        Object.assign(title.style, { fontSize: '16px', fontWeight: '700', marginBottom: '6px', color: '#eafff0' });
+
+        const desc = document.createElement('div');
+        desc.innerHTML = 'Get notified when seeds, eggs or merchant items restock. You can disable these any time in settings.';
+        Object.assign(desc.style, { fontSize: '13px', color: '#bfeecd', marginBottom: '14px', lineHeight: '1.35' });
+
+        // actions
+        const actions = document.createElement('div');
+        Object.assign(actions.style, { display: 'flex', gap: '10px', alignItems: 'center' });
+
+        const btnPrimary = document.createElement('button');
+        btnPrimary.textContent = 'Enable';
+        Object.assign(btnPrimary.style, {
+            background: 'linear-gradient(90deg,#16a34a,#38d39f)',
+            color: '#06110a',
+            border: 'none',
+            padding: '10px 14px',
+            borderRadius: '10px',
+            cursor: 'pointer',
+            fontWeight: '700',
+            boxShadow: '0 8px 24px rgba(22,163,74,0.14)'
+        });
+
+        const btnSecondary = document.createElement('button');
+        btnSecondary.textContent = 'No thanks';
+        Object.assign(btnSecondary.style, {
+            background: 'transparent',
+            color: '#bfeecd',
+            border: '1px solid rgba(190,238,205,0.08)',
+            padding: '10px 12px',
+            borderRadius: '10px',
+            cursor: 'pointer'
+        });
+
+        const dontAskLabel = document.createElement('label');
+        dontAskLabel.style.display = 'flex';
+        dontAskLabel.style.alignItems = 'center';
+        dontAskLabel.style.gap = '8px';
+        dontAskLabel.style.marginLeft = 'auto';
+        dontAskLabel.style.fontSize = '12px';
+        dontAskLabel.style.color = '#9ddfb3';
+        dontAskLabel.innerHTML = `<input type="checkbox" id="dont_ask_chk" style="width:14px;height:14px"> Don't ask again`;
+
+        actions.appendChild(btnPrimary);
+        actions.appendChild(btnSecondary);
+        actions.appendChild(dontAskLabel);
+
+        content.appendChild(title);
+        content.appendChild(desc);
+        content.appendChild(actions);
+
+        // close X
+        const closeBtn = document.createElement('button');
+        closeBtn.setAttribute('aria-label', 'Close');
+        closeBtn.innerHTML = '✕';
+        Object.assign(closeBtn.style, {
+            background: 'transparent',
+            border: 'none',
+            color: '#94d8a6',
+            cursor: 'pointer',
+            fontSize: '16px',
+            marginLeft: '8px'
+        });
+
+        card.appendChild(iconWrap);
+        card.appendChild(content);
+        card.appendChild(closeBtn);
+        overlay.appendChild(card);
+        document.body.appendChild(overlay);
+
+        // cleanup helper
+        function cleanup(saveDontAsk = false) {
+            try { window.removeEventListener('keydown', onKey); overlay.remove(); } catch (e) {}
+            if (saveDontAsk) localStorage.setItem('notif_prompt_dont_ask', '1');
+        }
+
+        // enable flow
+        async function enableFlow() {
+            try {
+                if (typeof window.requestNotificationPermission === 'function') {
+                    await window.requestNotificationPermission();
+                } else {
+                    const p = await Notification.requestPermission();
+                    if (p === 'granted') {
+                        try {
+                            if (typeof firebase !== 'undefined' && firebase.messaging) {
+                                const messaging = firebase.messaging();
+                                if (messaging && messaging.getToken) {
+                                    await messaging.getToken({ vapidKey: VAPID_KEY }).catch(()=>{});
+                                }
+                            }
+                        } catch (e) { console.warn('FCM token attempt failed', e); }
+                    }
+                }
+            } catch (e) {
+                console.warn('Permission request failed', e);
+            } finally {
+                const checked = document.getElementById('dont_ask_chk') && document.getElementById('dont_ask_chk').checked;
+                cleanup(checked);
+            }
+        }
+
+        // event handlers: close immediately and persist don't-ask if checked
+        btnPrimary.addEventListener('click', enableFlow);
+        btnSecondary.addEventListener('click', () => {
+            const checked = document.getElementById('dont_ask_chk') && document.getElementById('dont_ask_chk').checked;
+            cleanup(checked || true);
+        });
+        closeBtn.addEventListener('click', () => {
+            const checked = document.getElementById('dont_ask_chk') && document.getElementById('dont_ask_chk').checked;
+            cleanup(checked);
+        });
+
+        overlay.addEventListener('click', (ev) => {
+            if (ev.target === overlay) {
+                const checked = document.getElementById('dont_ask_chk') && document.getElementById('dont_ask_chk').checked;
+                cleanup(checked);
+            }
+        });
+
+        // keyboard handler
+        function onKey(e) { if (e.key === 'Escape') { const checked = document.getElementById('dont_ask_chk') && document.getElementById('dont_ask_chk').checked; cleanup(checked); } }
+        window.addEventListener('keydown', onKey);
+    } catch (e) {
+        console.warn('showNotificationPrompt failed', e);
+    }
+}
+
+// show shortly after load so UI has time to render
+window.addEventListener('load', () => setTimeout(showNotificationPrompt, 900));
+
 
 
