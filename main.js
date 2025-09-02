@@ -250,7 +250,16 @@ async function fetchMasterItems() {
     }
 }
 
-// Replace getStock usage to call the official stock endpoint via apiFetch
+// helper: next upcoming half-hour (unix seconds)
+function nextHalfHourUnix(from = new Date()){
+    const d = new Date(from.getTime());
+    const mins = d.getMinutes();
+    const add = (mins < 30) ? (30 - mins) : (60 - mins);
+    d.setMinutes(d.getMinutes() + add);
+    d.setSeconds(0,0);
+    return Math.floor(d.getTime()/1000);
+}
+
 async function getStock() {
     const data = await apiFetch('stock');
     if (!data) {
@@ -258,10 +267,13 @@ async function getStock() {
         return;
     }
 
-    // compute restock times as before (keeps your existing logic)
-    seedRestock = data.seed_stock && data.seed_stock[0] && data.seed_stock[0].end_date_unix || 0;
-    // egg restock calculation retained; you may adjust if API provides egg times
-    eggRestock = new Date(`${new Date().getFullYear()}-${(new Date().getMonth() + 1).toString().padStart(2, '0')}-${new Date().getDate().toString().padStart(2, '0')} ${Math.floor(new Date().getHours())+Math.floor((new Date().getMinutes() % 60) / 30)}:${Math.floor(((new Date().getMinutes() + 30) % 60) / 30) * 30}:00`).getTime() / 1000;
+    // compute restock times: prefer API timestamps, otherwise fall back to next half-hour
+    const apiSeedTs = data.seed_stock && data.seed_stock[0] && (data.seed_stock[0].end_date_unix || data.seed_stock[0].end_date);
+    seedRestock = apiSeedTs ? Number(apiSeedTs) : nextHalfHourUnix();
+
+    // prefer explicit egg timestamp if provided; otherwise same half-hour fallback
+    const apiEggTs = data.egg_stock && data.egg_stock[0] && (data.egg_stock[0].end_date_unix || data.egg_stock[0].end_date);
+    eggRestock = apiEggTs ? Number(apiEggTs) : nextHalfHourUnix();
 
     switch (mode) {
         case 'seed':
@@ -279,7 +291,6 @@ async function getStock() {
         case 'merchant':
             const merchantStock = (data.travelingmerchant_stock && data.travelingmerchant_stock.stock) || [];
             merchantInfos = await Promise.all(merchantStock.map(m => apiFetch(`info/${encodeURIComponent(m.item_id)}`).catch(()=>({}))));
-            // if traveling merchant data includes end_date_unix use it; otherwise show stock
             if (merchantStock[0] && merchantStock[0].end_date_unix && merchantStock[0].end_date_unix < Math.floor(Date.now()/1000)) {
                 renderItems(merchantStock, merchantInfos);
             } else if (merchantStock.length) {
@@ -478,6 +489,10 @@ function closeSettings() {
     // no-op while settings are removed
 }
 
+// ensure restock timer variables exist before any timers run (prevents ReferenceError)
+let seedRestock = 0;
+let eggRestock = 0;
+
 // ---- TIMER / RESTOCK UI ----
 function pad2(n) { return String(n).padStart(2, '0'); }
 
@@ -490,7 +505,6 @@ async function updateTimer() {
         const now = new Date();
         const h = now.getUTCHours();
         let nextHour = h - (h % 4) + 4;
-        // build UTC date for next merchant time (handles day rollover)
         let nextDate = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), nextHour % 24, 0, 0));
         if (nextHour >= 24) {
             nextDate = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 1, nextHour % 24, 0, 0));
@@ -503,12 +517,9 @@ async function updateTimer() {
     }
 
     if (distance <= 0) {
-        // time passed — refresh stock and recalc distance
         try { await getStock(); } catch (e) { /* ignore */ }
-        // recalc after refresh
         const nowSec2 = Math.floor(Date.now() / 1000);
         if (mode === 'merchant') {
-            // recalc merchant target
             const now = new Date();
             const h = now.getUTCHours();
             let nextHour = h - (h % 4) + 4;
@@ -539,13 +550,3 @@ async function updateTimer() {
 // start timer updates (1s) and kick an immediate update
 setInterval(updateTimer, 1000);
 updateTimer();
-
-// ---- switchMode: no color switching in JS (bar stays red via CSS) ----
-function switchMode(tab) {
-    mode = tab;
-    // keep UI consistent: fetch stock for the selected mode
-    getStock();
-}
-
-
-
