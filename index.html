@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html>
     <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1">
         <link rel="stylesheet" href="style.css">
         <!-- favicon / site icon -->
         <link rel="icon" type="image/png" href="slut-icon.png">
@@ -16,11 +17,11 @@
         </div>
         <ul>
             <li><div id="weather"></div></li>
-            <li><button onclick="switchMode('seed')">Seed</button></li>
-            <li><button onclick="switchMode('gear')">Gear</button></li>
-            <li><button onclick="switchMode('egg')">Eggs</button></li>
-            <li><button onclick="switchMode('merchant')">Merchant</button></li>
-            <li><button onclick="openSettings()">Settings</button></li>
+            <li><button onclick="switchMode('seed')" aria-label="Seed"><span class="btn-icon">🌱</span><span class="btn-text">Seed</span></button></li>
+            <li><button onclick="switchMode('gear')" aria-label="Gear"><span class="btn-icon">⚙️</span><span class="btn-text">Gear</span></button></li>
+            <li><button onclick="switchMode('egg')" aria-label="Eggs"><span class="btn-icon">🥚</span><span class="btn-text">Eggs</span></button></li>
+            <li><button onclick="switchMode('merchant')" aria-label="Merchant"><span class="btn-icon">🧳</span><span class="btn-text">Merchant</span></button></li>
+            <li><button onclick="openSettings()" aria-label="Settings"><span class="btn-icon">⚙️</span><span class="btn-text">Settings</span></button></li>
         </ul>
 
         <div id="timer"></div>
